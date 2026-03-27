@@ -1,0 +1,8 @@
+click==8.1.7
+piper-tts==1.2.0
+faster-whisper==1.0.3
+pyaudio==0.2.14
+numpy==1.26.4
+requests==2.31.0
+ollama==0.1.7
+pydantic==2.6.4
