@@ -2,18 +2,20 @@ import subprocess
 import threading
 import sys
 import os
+from typing import Callable, Optional, Tuple, List
 
 class CommandRunner:
-    def __init__(self, command, on_text_callback=None):
+    """Handles execution and real-time output capture of CLI commands."""
+    
+    def __init__(self, command: str, on_text_callback: Optional[Callable[[str], None]] = None):
         self.command = command
         self.on_text_callback = on_text_callback
-        self.process = None
-        self.output = []
+        self.process: Optional[subprocess.Popen] = None
+        self.output: List[str] = []
 
-    def run(self):
+    def run(self) -> Tuple[int, str]:
         """Runs the command and captures output in real-time."""
         try:
-            # Use shell=True for flexibility in command execution
             self.process = subprocess.Popen(
                 self.command,
                 shell=True,
@@ -24,7 +26,9 @@ class CommandRunner:
                 universal_newlines=True
             )
 
-            # Read output line by line
+            if self.process.stdout is None:
+                return 1, "Failed to capture stdout"
+
             for line in iter(self.process.stdout.readline, ""):
                 print(line, end="") # Print to terminal in real-time
                 self.output.append(line)
@@ -39,7 +43,7 @@ class CommandRunner:
             print(f"Error running command: {e}")
             return 1, str(e)
 
-def run_in_background(command, callback):
+def run_in_background(command: str, callback: Callable[[str], None]) -> Tuple[threading.Thread, CommandRunner]:
     """Utility to run a command and process output via a callback."""
     runner = CommandRunner(command, callback)
     thread = threading.Thread(target=runner.run)
