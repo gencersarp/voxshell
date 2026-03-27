@@ -15,7 +15,7 @@ from .summary import Summarizer
 @click.option('--llm', default="llama3", help="Ollama model name for Friendly Mode.")
 def main(command_str, full, friendly, voice, llm):
     """
-    mlmodelselect: A voice agent wrapper for any CLI command.
+    VoxShell: Turn any CLI tool into a voice-enabled agent.
     """
     # 1. Initialize Managers
     model_manager = ModelManager()
@@ -42,7 +42,7 @@ def main(command_str, full, friendly, voice, llm):
         text_buffer.append(text)
 
     # 5. Run the Command
-    click.echo(f"Executing: {command_str}")
+    click.secho(f"🚀 Executing: {command_str}", fg="green", bold=True)
     runner = CommandRunner(command_str, on_text_callback=on_text)
     return_code, full_output = runner.run()
 
@@ -51,9 +51,9 @@ def main(command_str, full, friendly, voice, llm):
         # Wait for voice engine to be ready if it's still loading
         voice_thread.join()
         
-        click.echo("\nSummarizing for voice agent...")
+        click.echo("\n🧠 Summarizing for voice agent...")
         summary = summarizer.summarize(full_output)
-        click.secho(f"Voice Summary: {summary}", fg="cyan")
+        click.secho(f"🎤 Voice Summary: {summary}", fg="cyan", bold=True)
         voice_engine.speak(summary)
 
     # Final cleanup (optional wait for audio to finish)

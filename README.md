@@ -1,61 +1,82 @@
-# mlmodelselect: The Voice Agent CLI Wrapper
+# 🎙️ VoxShell
 
-Turn any command-line tool into a voice agent with `mlmodelselect`. This tool wraps your existing CLI commands, captures their output, and provides local Text-to-Speech (TTS) and Speech-to-Text (STT) capabilities.
+**The Ultimate Voice Wrapper for any CLI tool.**  
+*Transform your terminal into a local, intelligent voice agent.*
 
-## Features
+---
 
-- **Plug-and-Play**: Just wrap any command: `mlmodelselect "ls -la"`.
-- **Local TTS**: High-quality voice output using Piper (no cloud API needed).
-- **Friendly Mode**: Automatically summarizes verbose outputs into natural-sounding voice snippets.
-- **Model Selection**: Easily switch between different local voices and LLM models.
-- **Privacy First**: Everything runs locally on your machine.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Local AI](https://img.shields.io/badge/AI-100%25_Local-brightgreen.svg)]()
 
-## Installation
+**VoxShell** is a plug-and-play CLI wrapper that adds local **Text-to-Speech (TTS)** and **Speech-to-Text (STT)** capabilities to any command-line tool. It captures output in real-time and speaks it back to you, with an optional "Friendly Mode" that uses local LLMs to synthesize verbose logs into concise summaries.
 
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/yourusername/mlmodelselect.git
-    cd mlmodelselect
-    ```
+## ✨ Features
 
-2.  **Install dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    pip install .
-    ```
+- **🚀 Plug-and-Play**: No complex setup. Just prefix any command: `voxshell "ls -la"`.
+- **👂 100% Local**: Powered by **Piper** (TTS) and **Whisper** (STT). No cloud APIs, no latency, no data leakage.
+- **🧠 Friendly Mode**: Automatically summarizes long outputs (help menus, log files, directories) into natural speech using **Ollama**.
+- **🔌 Any CLI**: Works with `git`, `docker`, `kubectl`, `grep`, or even your own custom scripts.
+- **📦 Auto-Managed**: Automatically downloads and manages high-quality voice models and weights.
 
-3.  **Optional (for Friendly Mode)**:
-    Install [Ollama](https://ollama.ai/) and pull a model:
-    ```bash
-    ollama pull llama3
-    ```
+---
 
-## Usage
+## 🚀 Quick Start
 
-### 1. Basic Output Reading
-Hear the entire output of a command:
+### 1. Installation
 ```bash
-mlmodelselect "echo 'Hello from my CLI!'" --full
+git clone https://github.com/gencersarp/voxshell.git
+cd voxshell
+pip install -r requirements.txt
+pip install -e .
 ```
 
-### 2. Friendly Mode (Summarization)
-Get a digestible voice summary of long outputs:
+### 2. Intelligent Summarization (Friendly Mode)
+Get a digestible summary of a long output:
 ```bash
-mlmodelselect "ls -la /usr/local/bin" --friendly
+voxshell "ls -la /usr/local/bin" --friendly
 ```
 
-### 3. Custom Voice
-Specify a different Piper voice:
+### 3. Full Output Reading
+Listen to the entire output as it streams:
 ```bash
-mlmodelselect "date" --full --voice en_US-lessac-low
+voxshell "echo 'System update complete. No errors found.'" --full
 ```
 
-## How it Works
+---
 
-- **TTS**: Uses `piper-tts` with `.onnx` models downloaded automatically to the `models/` directory.
-- **Friendly Mode**: Leverages local LLMs via `ollama` (defaulting to `llama3`) to synthesize verbose text into conversational summaries.
-- **STT**: Uses `faster-whisper` for future voice command support.
+## 🧠 The Intelligence Layer
 
-## License
+VoxShell integrates with **Ollama** to provide smart summarization. If you have Ollama installed and a model pulled (e.g., `llama3`), VoxShell will use it to "read between the lines" of your CLI output.
 
-MIT
+```bash
+# Optional: Setup Ollama for best results
+ollama pull llama3
+```
+
+---
+
+## 🛠️ Configuration
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--full` | Reads the entire stdout back to you. | `False` |
+| `--friendly` | Uses an LLM to summarize the output before speaking. | `False` |
+| `--voice` | The Piper voice model to use. | `en_US-lessac-medium` |
+| `--llm` | The Ollama model for summarization. | `llama3` |
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] **Voice Commands**: Speak directly to the terminal and have them executed.
+- [ ] **Custom Personalities**: Choose different "agent" personas for your CLI.
+- [ ] **Shell Extension**: Direct integration into `.zshrc` or `.bashrc`.
+- [ ] **Multi-Language**: Support for 30+ languages via Piper and Whisper.
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+Created with ❤️ by [gencersarp](https://github.com/gencersarp)
