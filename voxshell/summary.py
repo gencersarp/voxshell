@@ -8,6 +8,23 @@ class Summarizer:
     def __init__(self, model_name: str = "llama3"):
         self.model_name = model_name
 
+    # Lines kept from the head and tail when truncating long output.
+    _TRUNCATE_HEAD = 30
+    _TRUNCATE_TAIL = 10
+
+    def _truncate_output(self, text: str) -> str:
+        """Keep the first and last N lines of long output so the LLM sees
+        the most informative parts without hitting context limits."""
+        lines = text.splitlines()
+        total = len(lines)
+        cutoff = self._TRUNCATE_HEAD + self._TRUNCATE_TAIL
+        if total <= cutoff:
+            return text
+        omitted = total - cutoff
+        head = "\n".join(lines[:self._TRUNCATE_HEAD])
+        tail = "\n".join(lines[-self._TRUNCATE_TAIL:])
+        return f"{head}\n... [{omitted} lines omitted] ...\n{tail}"
+
     def summarize(self, text: str) -> str:
         """Attempts to summarize text using Ollama with improved prompting."""
         if not text.strip():
@@ -20,7 +37,7 @@ class Summarizer:
                 "Synthesize this output into a concise, high-signal summary "
                 "that is easy to understand when spoken aloud. "
                 "Keep it under 25 words. Do not use markdown or special characters.\n\n"
-                f"Command Output:\n{text}"
+                f"Command Output:\n{self._truncate_output(text)}"
             )
             
             response = ollama.chat(model=self.model_name, messages=[
