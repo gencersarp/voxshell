@@ -32,3 +32,9 @@ class ConfigManager:
 
     def get(self, key: str) -> Any:
         return self.config.get(key, self.defaults.get(key))
+
+    def reset_to_defaults(self) -> None:
+        """Overwrite saved config with factory defaults and reload in memory."""
+        self.config = dict(self.defaults)
+        with open(self.config_path, "w") as f:
+            json.dump(self.defaults, f, indent=4)
