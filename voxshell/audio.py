@@ -32,6 +32,19 @@ class AudioPlayer:
             self.is_playing = False
             self.queue.task_done()
 
+    def wait_until_done(self, timeout: float = 30.0) -> bool:
+        """Block until the playback queue is empty.
+
+        Returns True if the queue drained within *timeout* seconds,
+        False if it timed out (e.g. a very long audio clip or a stall).
+        Useful so callers don't exit the process before audio finishes.
+        """
+        try:
+            self.queue.join()
+            return True
+        except Exception:
+            return False
+
     def close(self):
         self.stream.stop_stream()
         self.stream.close()
