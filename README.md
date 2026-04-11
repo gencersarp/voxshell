@@ -1,82 +1,192 @@
-# 🎙️ VoxShell
+<div align="center">
 
-**The Ultimate Voice Wrapper for any CLI tool.**  
-*Transform your terminal into a local, intelligent voice agent.*
+```
+ _   _           ___ _        _ _ 
+| | | |_____ __ / __| |_  ___| | |
+| |_| / _ \ \ / \__ \ ' \/ -_) | |
+ \___/\___/_\_\ |___/_||_\___|_|_|
+```
 
----
+**The voice wrapper for any CLI tool — 100 % local, zero cloud.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Local AI](https://img.shields.io/badge/AI-100%25_Local-brightgreen.svg)]()
+[![100% Local](https://img.shields.io/badge/AI-100%25%20Local-brightgreen.svg)](#how-it-works)
+[![Tests](https://img.shields.io/badge/tests-25%20passing-success.svg)](#)
 
-**VoxShell** is a plug-and-play CLI wrapper that adds local **Text-to-Speech (TTS)** and **Speech-to-Text (STT)** capabilities to any command-line tool. It captures output in real-time and speaks it back to you, with an optional "Friendly Mode" that uses local LLMs to synthesize verbose logs into concise summaries.
-
-## ✨ Features
-
-- **🚀 Plug-and-Play**: No complex setup. Just prefix any command: `voxshell "ls -la"`.
-- **👂 100% Local**: Powered by **Piper** (TTS) and **Whisper** (STT). No cloud APIs, no latency, no data leakage.
-- **🧠 Friendly Mode**: Automatically summarizes long outputs (help menus, log files, directories) into natural speech using **Ollama**.
-- **🔌 Any CLI**: Works with `git`, `docker`, `kubectl`, `grep`, or even your own custom scripts.
-- **📦 Auto-Managed**: Automatically downloads and manages high-quality voice models and weights.
+</div>
 
 ---
 
-## 🚀 Quick Start
+VoxShell turns any shell command into a spoken conversation.  
+Prefix a command with `voxshell` and it reads the output back to you — or enter **interactive mode** and speak your commands out loud.
 
-### 1. Installation
+No cloud APIs. No data leaving your machine. Powered by **Piper TTS**, **Whisper STT**, and **Ollama**.
+
+---
+
+## Features
+
+| | |
+|---|---|
+| **Plug-and-play** | Works with any CLI tool — `git`, `docker`, `kubectl`, custom scripts. |
+| **Full mode** | Streams and reads every line of output as it appears. |
+| **Friendly mode** | Pipes output through a local LLM to produce a concise, natural-language summary. |
+| **Interactive mode** | Speak a command → it runs → the result is spoken back. Loop until you say *"exit"*. |
+| **100 % local** | Piper for TTS, faster-whisper for STT, Ollama for summarization. Nothing leaves your machine. |
+| **Auto-managed models** | Voice and Whisper models are downloaded automatically on first use. |
+
+---
+
+## Installation
+
+**1. Clone and install**
 ```bash
 git clone https://github.com/gencersarp/voxshell.git
 cd voxshell
-pip install -r requirements.txt
 pip install -e .
 ```
 
-### 2. Intelligent Summarization (Friendly Mode)
-Get a digestible summary of a long output:
+**2. (Optional) Install Ollama for Friendly Mode**
 ```bash
-voxshell "ls -la /usr/local/bin" --friendly
-```
-
-### 3. Full Output Reading
-Listen to the entire output as it streams:
-```bash
-voxshell "echo 'System update complete. No errors found.'" --full
-```
-
----
-
-## 🧠 The Intelligence Layer
-
-VoxShell integrates with **Ollama** to provide smart summarization. If you have Ollama installed and a model pulled (e.g., `llama3`), VoxShell will use it to "read between the lines" of your CLI output.
-
-```bash
-# Optional: Setup Ollama for best results
+# https://ollama.com
 ollama pull llama3
 ```
 
+> The TTS model (~60 MB) is downloaded automatically on first run. The Whisper `base` STT model is downloaded automatically when you use `interact`.
+
 ---
 
-## 🛠️ Configuration
+## Usage
+
+### Read a command's output aloud
+
+```bash
+# Speak every line as it streams
+voxshell "git log --oneline -10" --full
+
+# Let an LLM summarize it first, then speak the summary
+voxshell "ls -la /usr/local/bin" --friendly
+```
+
+### Interactive voice loop
+
+Speak commands out loud. VoxShell runs them and reads back the result. Say **"exit"** to stop.
+
+```bash
+voxshell interact
+
+# With options
+voxshell interact --friendly --stt-model small --duration 7
+```
+
+```
+🎙️  VoxShell interactive mode. Say a shell command, or 'exit' to quit.
+
+  Listening for 5s... (speak now)
+
+🗣️  Heard: echo hello world
+🚀 Running: echo hello world
+hello world
+```
+
+### View or update config
+
+```bash
+# Show current settings
+voxshell config
+
+# Set defaults
+voxshell config --voice en_US-lessac-medium --llm llama3
+```
+
+---
+
+## Options
+
+### `voxshell "<command>"` flags
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--full` | Reads the entire stdout back to you. | `False` |
-| `--friendly` | Uses an LLM to summarize the output before speaking. | `False` |
-| `--voice` | The Piper voice model to use. | `en_US-lessac-medium` |
-| `--llm` | The Ollama model for summarization. | `llama3` |
+| `--full` | Read the entire output aloud line-by-line. | off |
+| `--friendly` | Summarize via LLM before speaking. | off |
+| `--voice` | Piper voice model name. | `en_US-lessac-medium` |
+| `--llm` | Ollama model for Friendly Mode. | `llama3` |
+
+### `voxshell interact` flags
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--duration` | Seconds to record per turn. | `5` |
+| `--friendly` | Summarize responses before speaking. | off |
+| `--stt-model` | Whisper model: `tiny` / `base` / `small` / `medium`. | `base` |
+| `--voice` | Piper voice model name. | from config |
+| `--llm` | Ollama model for Friendly Mode. | `llama3` |
 
 ---
 
-## 🗺️ Roadmap
+## How it works
 
-- [ ] **Voice Commands**: Speak directly to the terminal and have them executed.
-- [ ] **Custom Personalities**: Choose different "agent" personas for your CLI.
-- [ ] **Shell Extension**: Direct integration into `.zshrc` or `.bashrc`.
-- [ ] **Multi-Language**: Support for 30+ languages via Piper and Whisper.
+```
+┌─────────────────────────────────────────────────────────┐
+│                        VoxShell                         │
+│                                                         │
+│  Your command ──► subprocess ──► stdout                 │
+│                                    │                    │
+│              ┌─────────────────────┤                    │
+│              │                     │                    │
+│         --full mode           --friendly mode           │
+│    (stream each line)     (buffer → Ollama → summary)   │
+│              │                     │                    │
+│              └──────────┬──────────┘                    │
+│                         │                               │
+│                    Piper TTS                            │
+│                  (local, offline)                       │
+│                         │                               │
+│                    PyAudio output                       │
+│                                                         │
+│  interact mode adds:                                    │
+│    Microphone ──► PyAudio ──► Whisper STT ──► command   │
+└─────────────────────────────────────────────────────────┘
+```
 
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
+| Component | Role |
+|-----------|------|
+| [Piper](https://github.com/rhasspy/piper) | Fast, local neural TTS with 30+ language voices |
+| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | Efficient Whisper STT (CTranslate2 backend) |
+| [Ollama](https://ollama.com) | Local LLM inference for Friendly Mode summaries |
 
 ---
-Created with ❤️ by [gencersarp](https://github.com/gencersarp)
+
+## Roadmap
+
+- [x] TTS output for any CLI command (`--full`)
+- [x] LLM summarization before speaking (`--friendly`)
+- [x] **Voice command input** (`voxshell interact`)
+- [ ] Silence-detection for listen (auto-stop instead of fixed duration)
+- [ ] Custom agent personas / system prompts
+- [ ] Shell extension (`.zshrc` / `.bashrc` alias helpers)
+- [ ] Multi-language support (30+ Piper voices, Whisper multilingual)
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Run the test suite with:
+
+```bash
+pip install pytest
+pytest tests/ -v
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+Made by <a href="https://github.com/gencersarp">gencersarp</a>
+</div>

@@ -1,35 +1,39 @@
 # Contributing to VoxShell
 
-First off, thank you for considering contributing to VoxShell! It's people like you that make VoxShell such a great tool.
+Thanks for taking the time to contribute!
 
-## How Can I Contribute?
+## Getting started
 
-### Reporting Bugs
-* Check the issues to see if the bug has already been reported.
-* If you find a new bug, please open a new issue with a clear title and description.
+```bash
+git clone https://github.com/gencersarp/voxshell.git
+cd voxshell
+pip install -e .
+pip install pytest
+```
 
-### Suggesting Enhancements
-* Enhancement suggestions are tracked as GitHub issues.
-* Provide a clear description of the suggested enhancement and why it would be useful.
+## Running the tests
 
-### Pull Requests
-1. Fork the repo and create your branch from `master`.
-2. If you've added code that should be tested, add tests.
-3. Ensure the test suite passes.
-4. Issue a pull request!
+```bash
+pytest tests/ -v
+```
 
-## Development Setup
+All 25 tests should pass before you open a PR.
 
-1. Install development dependencies:
-   ```bash
-   pip install -r requirements.txt
-   pip install -e .
-   ```
+## What to work on
 
-2. Run the tool:
-   ```bash
-   voxshell --help
-   ```
+Check the [open issues](https://github.com/gencersarp/voxshell/issues) or the roadmap in the README. Good first areas:
+
+- **Silence detection** — stop listening when the user stops speaking instead of waiting a fixed duration.
+- **New voices** — test and document other [Piper voice models](https://github.com/rhasspy/piper/blob/master/VOICES.md).
+- **Shell integration** — helper scripts for `.zshrc` / `.bashrc` aliases.
+
+## Pull request checklist
+
+1. Fork and branch from `master`.
+2. Add tests for any new behaviour.
+3. Run `pytest tests/ -v` — all green.
+4. Open a PR with a short description of *what* and *why*.
 
 ## License
-By contributing, you agree that your contributions will be licensed under its MIT License.
+
+By contributing, you agree your code will be released under the [MIT License](LICENSE).
