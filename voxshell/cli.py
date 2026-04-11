@@ -39,28 +39,18 @@ def _print_banner():
               callback=lambda ctx, _, v: (click.echo(f"voxshell {_get_version()}"), ctx.exit()) if v else None,
               help="Show version and exit.")
 @click.pass_context
-def main(
-    ctx,
-    full: bool,
-    friendly: bool,
-    voice: Optional[str],
-    llm: Optional[str],
-):
-    """VoxShell — voice wrapper for any CLI tool.
+def main(ctx, full: bool, friendly: bool, voice: Optional[str], llm: Optional[str]):
+    """VoxShell — voice layer for AI agents and any CLI tool.
 
     \b
     Examples:
-      voxshell "git log --oneline -5" --full
-      voxshell "ls -la" --friendly
-      voxshell interact
+      voxshell run claude              # start a registered agent
+      voxshell agents list             # show configured agents
+      voxshell agents add claude "claude --permission-mode bypassPermissions"
     """
-    # ctx.args holds any positional tokens that weren't consumed as options.
-    # When a subcommand is matched (e.g. `voxshell config`), Click routes there
-    # before this callback runs, so ctx.args is empty in that case.
     command_str: Optional[str] = " ".join(ctx.args) if ctx.args else None
 
     config_manager = ConfigManager()
-
     voice = voice or config_manager.get("voice")
     llm = llm or config_manager.get("llm_model")
     friendly = friendly or (config_manager.get("friendly_mode") if not full else False)
@@ -106,18 +96,150 @@ def main(
 
 
 # ---------------------------------------------------------------------------
+# agents sub-command group
+# ---------------------------------------------------------------------------
+
+@main.group()
+def agents():
+    """Manage the registered agent list (add / remove / list)."""
+
+
+@agents.command(name="list")
+def agents_list():
+    """Show all registered agents."""
+    cm = ConfigManager()
+    registry = cm.get_agents()
+    click.echo(_DIVIDER)
+    if not registry:
+        click.secho("  No agents registered yet.", fg="yellow")
+        click.echo()
+        click.secho('  Add one: voxshell agents add <name> "<command>"', fg="bright_black")
+    else:
+        click.secho("  Registered agents", bold=True)
+        click.echo()
+        for name, cmd in registry.items():
+            click.echo(f"  {click.style(name, fg='cyan', bold=True):20s}  {cmd}")
+    click.echo(_DIVIDER)
+
+
+@agents.command(name="add")
+@click.argument("name")
+@click.argument("command")
+def agents_add(name: str, command: str):
+    """Register a new agent (or overwrite an existing one).
+
+    \b
+    Examples:
+      voxshell agents add claude "claude --permission-mode bypassPermissions"
+      voxshell agents add gemini "gemini"
+    """
+    reserved = {"list", "add", "remove"}
+    if name in reserved:
+        click.secho(f"  ✗  '{name}' is a reserved name.", fg="red")
+        raise SystemExit(1)
+
+    cm = ConfigManager()
+    existed = name in cm.get_agents()
+    cm.add_agent(name, command)
+    verb = "Updated" if existed else "Added"
+    click.secho(f"  ✅  {verb} agent '{name}'  →  {command}", fg="green")
+
+
+@agents.command(name="remove")
+@click.argument("name")
+def agents_remove(name: str):
+    """Remove a registered agent by name."""
+    cm = ConfigManager()
+    if cm.remove_agent(name):
+        click.secho(f"  ✅  Removed agent '{name}'.", fg="green")
+    else:
+        click.secho(f"  ✗  No agent named '{name}'.", fg="red")
+        raise SystemExit(1)
+
+
+# ---------------------------------------------------------------------------
+# run sub-command
+# ---------------------------------------------------------------------------
+
+@main.command(name="run")
+@click.argument("agent_name")
+@click.option("--voice", help="macOS `say` voice (default: Samantha).")
+@click.option("--no-voice", "no_voice", is_flag=True,
+              help="Disable voice summaries (show text only).")
+@click.option("--sentences", default=3, show_default=True,
+              help="Max sentences to speak per response.")
+def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: int):
+    """Start a registered AI agent with live voice summaries.
+
+    VoxShell runs the agent in a full PTY (the agent behaves exactly as if
+    you launched it directly), intercepts its output, and after each response
+    speaks a clean summary — stripping code, paths, and URLs.
+
+    \b
+    Example:
+      voxshell run claude
+      voxshell run gemini --no-voice
+    """
+    from .runner import AgentRunner
+    from .filter import clean_for_speech
+    from .tts import SystemTTS
+
+    cm = ConfigManager()
+    command = cm.get_agent(agent_name)
+    if not command:
+        registry = cm.get_agents()
+        click.secho(f"  ✗  No agent named '{agent_name}'.", fg="red")
+        if registry:
+            click.echo("  Available: " + "  ".join(registry.keys()))
+        else:
+            click.secho('  Add one: voxshell agents add <name> "<command>"', fg="bright_black")
+        raise SystemExit(1)
+
+    say_voice = voice or cm.get("say_voice") or "Samantha"
+    tts = SystemTTS(voice=say_voice) if not no_voice else None
+
+    def on_response(raw: str) -> None:
+        spoken = clean_for_speech(raw, max_sentences=sentences)
+        if spoken and tts:
+            tts.speak(spoken)
+
+    _print_banner()
+    click.echo(_DIVIDER)
+    click.secho(f"  🤖  Agent : {agent_name}", fg="cyan", bold=True)
+    click.secho(f"  ⌨️   Command: {command}", fg="bright_black")
+    voice_label = f"say ({say_voice})" if not no_voice else "off"
+    click.secho(f"  🔊  Voice  : {voice_label}", fg="bright_black")
+    click.echo(_DIVIDER)
+    click.echo()
+
+    runner = AgentRunner(command, on_response=on_response)
+    exit_code = runner.run()
+
+    if tts:
+        tts.wait_until_done()
+
+    click.echo()
+    click.echo(_DIVIDER)
+    click.secho(f"  Agent exited (code {exit_code}).", fg="bright_black")
+    click.echo(_DIVIDER)
+
+
+# ---------------------------------------------------------------------------
 # config sub-command
 # ---------------------------------------------------------------------------
 
 @main.command()
-@click.option("--voice", help="Default Piper voice model.")
+@click.option("--voice", help="Default Piper voice (for --full / interact).")
+@click.option("--say-voice", "say_voice", help="Default macOS `say` voice (for run).")
 @click.option("--llm", help="Default Ollama model.")
-def config(voice, llm):
+def config(voice, say_voice, llm):
     """View or update persistent VoxShell configuration."""
     cm = ConfigManager()
     updates = {}
     if voice:
         updates["voice"] = voice
+    if say_voice:
+        updates["say_voice"] = say_voice
     if llm:
         updates["llm_model"] = llm
 
@@ -127,9 +249,11 @@ def config(voice, llm):
     else:
         click.echo(_DIVIDER)
         click.secho("  ⚙️   Current configuration", bold=True)
-        click.echo(_DIVIDER)
+        click.echo()
+        skip = {"agents"}
         for k, v in cm.config.items():
-            click.echo(f"  {click.style(k, fg='cyan')}: {v}")
+            if k not in skip:
+                click.echo(f"  {click.style(k, fg='cyan'):25s}  {v}")
         click.echo(_DIVIDER)
 
 
@@ -138,19 +262,16 @@ def config(voice, llm):
 # ---------------------------------------------------------------------------
 
 @main.command()
-@click.option("--duration", default=5, show_default=True,
-              help="Seconds to record per turn.")
-@click.option("--friendly", is_flag=True,
-              help="Summarize responses before speaking.")
+@click.option("--duration", default=5, show_default=True, help="Seconds to record per turn.")
+@click.option("--friendly", is_flag=True, help="Summarize responses before speaking.")
 @click.option("--stt-model", default="base", show_default=True,
               help="Whisper model size: tiny | base | small | medium.")
 @click.option("--voice", help="Piper voice model name.")
-@click.option("--llm", default="llama3", show_default=True,
-              help="Ollama model for Friendly Mode.")
+@click.option("--llm", default="llama3", show_default=True, help="Ollama model for Friendly Mode.")
 def interact(duration: int, friendly: bool, stt_model: str, voice: Optional[str], llm: str):
-    """Interactive voice loop — speak a command, hear the result, repeat.
+    """Interactive voice loop — speak a shell command, hear the result, repeat.
 
-    Say \033[1m"exit"\033[0m or \033[1m"quit"\033[0m to stop.
+    Say "exit" or "quit" to stop.
     """
     config_manager = ConfigManager()
     voice = voice or config_manager.get("voice")
