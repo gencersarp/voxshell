@@ -102,9 +102,16 @@ voxshell run <agent> --sentences 5    # speak up to 5 sentences per response
 ```bash
 voxshell config                        # show current settings
 voxshell config --say-voice Ava        # change the default macOS voice
+voxshell config --sentences 5          # change default max sentences to speak
 ```
 
 Available macOS voices: `say -v ?`  Good options: `Samantha`, `Ava`, `Tom`, `Alex`.
+
+### Aliases
+
+```bash
+voxshell alias                         # show recommended shell aliases
+```
 
 ---
 

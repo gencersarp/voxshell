@@ -9,14 +9,12 @@ from .config import ConfigManager
 from .core import CommandRunner
 from .models import ModelManager
 from .summary import Summarizer
-
-_BANNER = """\
-\033[36m
+_BANNER = r"""[36m
  _   _           ___ _        _ _
 | | | |_____ __ / __| |_  ___| | |
 | |_| / _ \ \ / \__ \ ' \/ -_) | |
  \___/\___/_\_\ |___/_||_\___|_|_|
-\033[0m"""
+[0m"""
 
 _DIVIDER = click.style("─" * 48, fg="bright_black")
 
@@ -166,9 +164,9 @@ def agents_remove(name: str):
 @click.option("--voice", help="macOS `say` voice (default: Samantha).")
 @click.option("--no-voice", "no_voice", is_flag=True,
               help="Disable voice summaries (show text only).")
-@click.option("--sentences", default=3, show_default=True,
-              help="Max sentences to speak per response.")
-def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: int):
+@click.option("--sentences", type=int,
+              help="Max sentences to speak per response (overrides config).")
+def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: Optional[int]):
     """Start a registered AI agent with live voice summaries.
 
     VoxShell runs the agent in a full PTY (the agent behaves exactly as if
@@ -196,10 +194,11 @@ def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: 
         raise SystemExit(1)
 
     say_voice = voice or cm.get("say_voice") or "Samantha"
+    max_s = sentences if sentences is not None else cm.get("max_sentences")
     tts = SystemTTS(voice=say_voice) if not no_voice else None
 
     def on_response(raw: str) -> None:
-        spoken = clean_for_speech(raw, max_sentences=sentences)
+        spoken = clean_for_speech(raw, max_sentences=max_s)
         if spoken and tts:
             tts.speak(spoken)
 
@@ -208,7 +207,7 @@ def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: 
     click.secho(f"  🤖  Agent : {agent_name}", fg="cyan", bold=True)
     click.secho(f"  ⌨️   Command: {command}", fg="bright_black")
     voice_label = f"say ({say_voice})" if not no_voice else "off"
-    click.secho(f"  🔊  Voice  : {voice_label}", fg="bright_black")
+    click.secho(f"  🔊  Voice  : {voice_label}  |  Sentences: {max_s}", fg="bright_black")
     click.echo(_DIVIDER)
     click.echo()
 
@@ -232,7 +231,8 @@ def run_agent(agent_name: str, voice: Optional[str], no_voice: bool, sentences: 
 @click.option("--voice", help="Default Piper voice (for --full / interact).")
 @click.option("--say-voice", "say_voice", help="Default macOS `say` voice (for run).")
 @click.option("--llm", help="Default Ollama model.")
-def config(voice, say_voice, llm):
+@click.option("--sentences", type=int, help="Default max sentences to speak.")
+def config(voice, say_voice, llm, sentences):
     """View or update persistent VoxShell configuration."""
     cm = ConfigManager()
     updates = {}
@@ -242,6 +242,8 @@ def config(voice, say_voice, llm):
         updates["say_voice"] = say_voice
     if llm:
         updates["llm_model"] = llm
+    if sentences is not None:
+        updates["max_sentences"] = sentences
 
     if updates:
         cm.save_config(updates)
@@ -255,6 +257,31 @@ def config(voice, say_voice, llm):
             if k not in skip:
                 click.echo(f"  {click.style(k, fg='cyan'):25s}  {v}")
         click.echo(_DIVIDER)
+
+
+# ---------------------------------------------------------------------------
+# alias sub-command
+# ---------------------------------------------------------------------------
+
+@main.command()
+def alias():
+    """Show shell alias helpers for .zshrc / .bashrc."""
+    click.echo(_DIVIDER)
+    click.secho("  🐚  Shell Aliases", bold=True)
+    click.echo()
+    click.echo("  Add these to your " + click.style("~/.zshrc", fg="cyan") + " or " + click.style("~/.bashrc", fg="cyan") + ":")
+    click.echo()
+    click.secho("    # Run a registered agent", fg="bright_black")
+    click.secho("    alias vxr='voxshell run'", fg="green")
+    click.echo()
+    click.secho("    # Use voice to run any command", fg="bright_black")
+    click.secho("    alias vxc='voxshell --full'", fg="green")
+    click.echo()
+    click.secho("    # LLM summarization mode", fg="bright_black")
+    click.secho("    alias vxf='voxshell --friendly'", fg="green")
+    click.echo()
+    click.echo("  Then you can just type: " + click.style("vxr claude", fg="yellow"))
+    click.echo(_DIVIDER)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voxshell"
+version = "0.2.0"
+description = "Transform any CLI tool into a voice-enabled agent with local TTS, STT, and smart summarization."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "gencersarp"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click",
+    "piper-tts",
+    "faster-whisper",
+    "pyaudio",
+    "numpy",
+    "requests",
+    "ollama",
+    "pydantic"
+]
+
+[project.scripts]
+voxshell = "voxshell.cli:main"
+
+[tool.setuptools]
+packages = ["voxshell"]

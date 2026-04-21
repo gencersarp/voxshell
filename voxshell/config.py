@@ -14,6 +14,7 @@ class ConfigManager:
             "llm_model": "llama3",
             "friendly_mode": False,
             "say_voice": "Samantha",   # macOS `say` voice for agent runner
+            "max_sentences": 3,        # default sentences for voice summaries
             "agents": {},              # {name: command}
         }
         self.config = self._load_config()
